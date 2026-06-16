@@ -1,0 +1,3 @@
+# Docs site (MkDocs) build dependencies - used by CI/CD and local preview.
+mkdocs-material~=9.5
+mkdocs-same-dir~=0.1

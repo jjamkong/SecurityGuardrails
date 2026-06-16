@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  markdown-lint:
+    name: Markdown lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lint Markdown
+        uses: DavidAnson/markdownlint-cli2-action@v17
+        with:
+          globs: "**/*.md"
+
+  link-check:
+    name: Internal link check (offline)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check local links
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: "--offline --no-progress './**/*.md'"
+          fail: true
+
+  docs-build:
+    name: Docs build (smoke)
+    runs-on: ubuntu-latest
+    env:
+      DISABLE_MKDOCS_2_WARNING: "true"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-docs.txt
+      - name: Install docs deps
+        run: pip install -r requirements-docs.txt
+      - name: Build docs (strict)
+        run: mkdocs build --strict

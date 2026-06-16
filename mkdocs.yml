@@ -1,0 +1,76 @@
+site_name: SecurityGuardrails
+site_description: URL 입력 → 웹 취약점 분석 → 취약점 레포트 + 조치 가이드 (합법·방어용)
+site_url: https://jjamkong.github.io/SecurityGuardrails/
+repo_url: https://github.com/jjamkong/SecurityGuardrails
+repo_name: jjamkong/SecurityGuardrails
+
+# 문서 소스가 저장소 루트에 있으므로 docs_dir=루트, same-dir 플러그인이 site_dir 충돌 검사를 해제한다.
+docs_dir: .
+
+plugins:
+  - same-dir
+  - search
+
+theme:
+  name: material
+  language: ko
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.indexes
+    - content.code.copy
+    - toc.follow
+    - search.suggest
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+
+markdown_extensions:
+  - admonition
+  - toc:
+      permalink: true
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - tables
+
+# nav 누락을 빌드에서 가시화 (향후 추가 문서가 조용히 빠지는 것 방지)
+validation:
+  nav:
+    omitted_files: warn
+  links:
+    absolute_links: ignore
+
+# 마크다운이 아닌 파일은 빌드에서 제외 (same-dir 사용 시 루트 전체가 docs로 취급됨)
+exclude_docs: |
+  /.github/
+  /node_modules/
+  /site/
+  /.venv/
+  /venv/
+  *.json
+  *.yml
+  *.yaml
+  *.txt
+  *.toml
+  /.editorconfig
+  /.gitignore
+
+nav:
+  - 홈: README.md
+  - 마스터 기획서 (PLAN): PLAN.md
+  - 운영 규약 (CLAUDE): CLAUDE.md
+  - 역할 분장 (Harness):
+      - 인덱스: harness/README.md
+      - PM / 기획: harness/pm-planner.md
+      - 보안 아키텍트: harness/security-architect.md
+      - 취약점 연구원 / Pentester: harness/security-researcher.md
+      - 백엔드: harness/backend.md
+      - 프론트엔드: harness/frontend.md
+      - 리포트·KB: harness/report-engineer.md
+      - DevOps: harness/devops.md
+      - QA: harness/qa.md
+      - 컴플라이언스: harness/compliance.md
+  - 변경 이력 (CHANGELOG): CHANGELOG.md
+  - 기여 가이드: CONTRIBUTING.md
+  - 보안 정책: SECURITY.md

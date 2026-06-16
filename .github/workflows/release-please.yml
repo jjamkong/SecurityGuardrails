@@ -1,0 +1,21 @@
+name: Release Please
+
+# main 의 Conventional Commits 를 분석해 릴리스 PR → 머지 시 CHANGELOG·GitHub Release·태그 자동 생성.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    name: Release automation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v4
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json

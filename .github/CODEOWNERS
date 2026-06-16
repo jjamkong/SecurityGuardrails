@@ -1,0 +1,16 @@
+# 코드 오너 — PR 시 자동 리뷰 지정 (역할별 책임은 harness/ 문서 참조)
+# 현재 단독 운영자: @jjamkong
+
+*                       @jjamkong
+
+# 기획·운영 핵심 문서
+/PLAN.md                @jjamkong
+/CLAUDE.md              @jjamkong
+
+# 역할 분장 (각 역할 책임자 핸들로 세분화 가능)
+/harness/               @jjamkong
+
+# CI/CD · 거버넌스
+/.github/               @jjamkong
+/mkdocs.yml             @jjamkong
+/release-please-config.json   @jjamkong

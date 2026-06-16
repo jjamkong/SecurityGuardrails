@@ -1,0 +1,21 @@
+# markdownlint-cli2 설정 — CI 문서 린트
+config:
+  default: true
+  MD013: false   # 줄 길이 제한 (한국어 산문/표)
+  MD024:
+    siblings_only: true   # 다른 섹션의 동일 소제목 허용
+  MD026: false   # 제목 끝 문장부호 (한국어)
+  MD033: false   # 인라인 HTML 허용
+  MD036: false   # 강조를 제목처럼 사용 허용
+  MD040: false   # 코드펜스 언어 미지정 허용 (ASCII 다이어그램)
+  MD041: false   # 첫 줄 최상위 제목 강제 해제 (README 배지)
+  MD060: false   # 표 파이프 간격 스타일 (GFM 표는 정상 렌더링 — 과도하게 엄격)
+
+globs:
+  - "**/*.md"
+
+ignores:
+  - "node_modules"
+  - "site"
+  - ".venv"
+  - "CHANGELOG.md"   # release-please 가 관리
