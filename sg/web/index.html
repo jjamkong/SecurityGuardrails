@@ -49,7 +49,7 @@
     <h1>📋 SecurityGuardrails — 웹 취약점 점검</h1>
     <div class="sub">URL 입력 → Passive 점검 → 취약점 + 조치 가이드</div>
     <div class="warn">⚠️ <b>승인된 자산만</b> 점검합니다. 서버에 등록된 허용 도메인(및 서브도메인)만
-      점검 가능하며, 그 외 도메인은 거부됩니다. 접근 키가 필요합니다.</div>
+      점검 가능하며, 그 외 도메인은 거부됩니다. <span id="mode"></span></div>
 
     <div class="card">
       <div class="row">
@@ -57,21 +57,24 @@
           <label>점검 대상 URL/도메인</label>
           <input id="target" placeholder="https://dev.mycompany.com" />
         </div>
-        <div class="col">
+        <div class="col" id="keybox">
           <label>접근 키 (X-API-Key)</label>
           <input id="apikey" type="password" placeholder="SG_API_KEY" />
         </div>
       </div>
-      <div class="row">
-        <div class="col">
-          <label>점검 담당자 (authorized-by)</label>
-          <input id="by" placeholder="you@org.com" />
+      <details>
+        <summary class="muted">고급 (선택): 담당자 · 승인 ID</summary>
+        <div class="row">
+          <div class="col">
+            <label>점검 담당자 (authorized-by)</label>
+            <input id="by" placeholder="you@org.com" />
+          </div>
+          <div class="col">
+            <label>승인 ID (scope-id)</label>
+            <input id="sid" placeholder="예: ticket-1234" />
+          </div>
         </div>
-        <div class="col">
-          <label>승인 ID (scope-id)</label>
-          <input id="sid" placeholder="예: ticket-1234" />
-        </div>
-      </div>
+      </details>
       <button id="run" onclick="runScan()">점검 실행</button>
     </div>
 
@@ -83,6 +86,21 @@
                   medium:["med","cdot-medium"], low:["low","cdot-low"], info:["info","cdot-info"] };
     const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c =>
       ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
+
+    // 시작 시 서버 모드 확인 — no-auth면 키 입력칸 숨기고 URL만 받게
+    (async function initMode() {
+      try {
+        const cfg = await (await fetch("/config")).json();
+        const mode = document.getElementById("mode");
+        const doms = (cfg.authorized_domains || []).join(", ") || "(미설정)";
+        if (cfg.no_auth) {
+          document.getElementById("keybox").style.display = "none";
+          mode.innerHTML = "키 없이 사용(로컬 모드). 허용 도메인: <b>" + esc(doms) + "</b>";
+        } else {
+          mode.innerHTML = "접근 키 필요. 허용 도메인: <b>" + esc(doms) + "</b>";
+        }
+      } catch (e) { /* 무시 */ }
+    })();
 
     async function runScan() {
       const out = document.getElementById("out");

@@ -52,21 +52,32 @@
 
 ## 웹 UI (브라우저에서 도메인 입력 → 결과 표)
 
-CLI 대신 웹 폼으로 점검할 수 있습니다. **무단 스캔 방지**를 위해 두 가지가 모두 설정돼야 동작합니다(fail-closed):
+CLI 대신 웹 폼으로 점검할 수 있습니다. **점검 허용 도메인(`SG_AUTHORIZED_DOMAINS`)은 항상 필수** —
+이 도메인/서브도메인만 점검 가능하고 그 외는 **403 거부**됩니다(무단 스캔 방지). 접근 통제는 둘 중 택1:
 
-- `SG_API_KEY` — 접근 키(아무나 못 돌림)
-- `SG_AUTHORIZED_DOMAINS` — **점검 허용 도메인**(쉼표 구분). 이 도메인/서브도메인만 점검 가능, **그 외 도메인은 403 거부**.
+### A. 키 없이 — 로컬 전용 (가장 간단)
+
+```powershell
+$env:SG_ALLOW_NO_AUTH = "1"                          # 키 없이, localhost 직접 접속만
+$env:SG_AUTHORIZED_DOMAINS = "next-securities.com"
+python -m uvicorn sg.api:app --host 127.0.0.1 --port 8000
+# 브라우저 http://127.0.0.1:8000 → URL만 입력 → 점검 실행
+```
+
+> ⚠️ no-auth 모드는 **직접 localhost 접속 전용**입니다. **리버스 프록시 뒤/외부 공개에는 절대 사용 금지**
+> (`X-Forwarded-For` 위조로 우회될 수 있어, 프록시 경유 요청은 거부됩니다). 프록시/원격은 아래 B 사용.
+
+### B. 접근 키 — 원격/공유 환경
 
 ```powershell
 $env:SG_API_KEY = "원하는-키"
 $env:SG_AUTHORIZED_DOMAINS = "next-securities.com,mycompany.com"
-uvicorn sg.api:app --host 127.0.0.1 --port 8000
-# 브라우저에서 http://127.0.0.1:8000 접속 → 대상 URL + 접근 키 입력 → 점검 실행
+python -m uvicorn sg.api:app --host 127.0.0.1 --port 8000
+# 브라우저에서 대상 URL + 접근 키 입력 → 점검 실행
 ```
 
-> ⚠️ 이 UI는 **조직이 승인한 도메인을 권한 있는 담당자가** 점검하는 용도입니다.
-> "아무나 아무 도메인이나" 스캔하는 공개 서비스로 노출하지 마세요(무단 스캔 = 위법).
-> 외부 공개가 필요하면 인증/접근통제를 반드시 앞단에 두세요.
+> ⚠️ "아무나 아무 도메인이나" 스캔하는 공개 서비스로 노출하지 마세요(무단 스캔 = 위법).
+> 외부 공개가 필요하면 **키 모드 + 앞단 인증(SSO 등)** 을 두세요(no-auth 금지).
 
 ## 로컬에서 문서 미리보기
 

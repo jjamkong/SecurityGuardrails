@@ -22,9 +22,10 @@ ruff check . && mypy sg && pytest -q                      # 린트·타입·테�
 python -m sg scan https://app.internal --authorized-by 이름   # CLI 점검 (승인 필수)
 pip install -r requirements-docs.txt && mkdocs serve      # 문서 사이트 로컬 미리보기
 
-# 웹 UI (브라우저에서 도메인 입력 → 결과 표). 접근키 + 허용도메인 둘 다 필수(fail-closed):
-$env:SG_API_KEY="키"; $env:SG_AUTHORIZED_DOMAINS="next-securities.com"
-uvicorn sg.api:app --host 127.0.0.1 --port 8000           # http://127.0.0.1:8000
+# 웹 UI (브라우저에서 URL 입력 → 결과 표). 허용도메인 필수, 접근통제는 키 또는 no-auth(로컬전용):
+$env:SG_AUTHORIZED_DOMAINS="next-securities.com"; $env:SG_ALLOW_NO_AUTH="1"   # 키 없이(localhost만)
+python -m uvicorn sg.api:app --host 127.0.0.1 --port 8000  # http://127.0.0.1:8000
+# ⚠️ no-auth는 직접 localhost 전용 — 프록시 뒤/원격 공개엔 금지(대신 $env:SG_API_KEY="키")
 ```
 
 > ⚠️ **승인된 자산만**: 스캔은 `--authorized-by` 필수 + 대상 호스트가 스코프(allowed_hosts) 안에 있어야 한다. 미승인/만료/범위밖이면 `AuthorizationError`로 차단(점검 0건).
