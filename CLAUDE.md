@@ -9,11 +9,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **URL을 입력하면 해당 사이트를 자동 점검하여 ① 취약점 레포트 + ② 취약점별 조치 가이드 를 산출하는 합법·방어용 웹 취약점 분석 시스템 (SecurityGuardrails).**
 
-## 현재 상태 (중요 — 지어내지 말 것)
+## 현재 상태
 
-- **계획 단계.** 현재 저장소에는 기획 문서(`PLAN.md`)와 역할별 JD(`harness/`)만 있고 **소스 코드·빌드·테스트·실행 명령은 아직 없다.**
-- 따라서 이 문서에 **없는 명령어/디렉터리/스크립트를 추측해 적지 말 것.** 코드가 생기면 그때 사실에 근거해 이 파일을 갱신한다(필요 시 `/init` 재실행).
-- 기술 스택·역할·로드맵·데이터 모델은 모두 **제안(proposed)** 상태 → 출처는 항상 `PLAN.md`.
+- **Phase 1 MVP 구현됨 (Sprint 1).** Python 패키지 `sg/` — 승인/스코프 게이트 + **Passive 점검**(보안 헤더·TLS·쿠키·정보 노출) + 조치 가이드 포함 **JSON 레포트**. 스택: **Python (FastAPI)**. 백로그: [backlog/sprint-1.md](backlog/sprint-1.md).
+- **미구현(추측 금지):** Active(능동) 점검, 프론트엔드/대시보드, DB·큐, ZAP/Nuclei 연동 → Sprint 2+. 위 "미구현"을 있는 것처럼 적지 말 것. 상위 정의 출처는 항상 `PLAN.md`.
+
+## 핵심 명령어 (Python MVP)
+
+```bash
+pip install -e ".[dev]"                                   # 설치(개발 의존성 포함)
+ruff check . && mypy sg && pytest -q                      # 린트·타입·테스트 (CI와 동일)
+python -m sg scan https://app.internal --authorized-by 이름   # CLI 점검 (승인 필수)
+uvicorn sg.api:app --reload                               # API 서버 (POST /scans · GET /health)
+pip install -r requirements-docs.txt && mkdocs serve      # 문서 사이트 로컬 미리보기
+```
+
+> ⚠️ **승인된 자산만**: 스캔은 `--authorized-by` 필수 + 대상 호스트가 스코프(allowed_hosts) 안에 있어야 한다. 미승인/만료/범위밖이면 `AuthorizationError`로 차단(점검 0건).
 
 ---
 
@@ -93,5 +104,5 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## 자주 만날 함정 (현재 알려진 것)
 
 - **빈 저장소 가정 금지** — 실행 전 실제 파일 존재를 확인한다(`Glob`/`Read`). 과거 워크스페이스에 다른 프로젝트(InterviewBot)가 섞여 있었음.
-- **명령어 환각 금지** — 빌드/테스트 명령이 생기기 전까지는 "아직 없음"이 정답이다.
+- **명령어 환각 금지** — 실제 명령은 위 "핵심 명령어"에 한정. 미구현 기능의 명령을 지어내지 말 것.
 - **테스트는 격리 환경에서만** — 취약 테스트 앱은 외부에 노출하지 말고 로컬/격리 네트워크에서만 구동.

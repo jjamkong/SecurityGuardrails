@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "securityguardrails"
+version = "0.1.0"
+description = "URL 입력 → 합법·방어용 웹 취약점 Passive 점검 → 조치 가이드 포함 JSON 레포트"
+requires-python = ">=3.10"
+dependencies = [
+  "httpx>=0.27",
+  "pydantic>=2.6",
+  "cryptography>=42",
+  "fastapi>=0.110",
+  "uvicorn>=0.29",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.4", "mypy>=1.9"]
+
+[project.scripts]
+sg = "sg.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["sg*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+warn_unused_ignores = false

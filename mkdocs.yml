@@ -48,6 +48,10 @@ exclude_docs: |
   /site/
   /.venv/
   /venv/
+  /sg/
+  /tests/
+  /.sg/
+  *.py
   *.json
   *.yml
   *.yaml
@@ -71,6 +75,9 @@ nav:
       - DevOps: harness/devops.md
       - QA: harness/qa.md
       - 컴플라이언스: harness/compliance.md
+  - 백로그 (Backlog):
+      - 인덱스: backlog/README.md
+      - Sprint 1: backlog/sprint-1.md
   - 변경 이력 (CHANGELOG): CHANGELOG.md
   - 기여 가이드: CONTRIBUTING.md
   - 보안 정책: SECURITY.md

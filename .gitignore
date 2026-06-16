@@ -47,6 +47,13 @@ venv/
 # === MkDocs 빌드 산출물 ===
 site/
 
+# === 빌드/패키지 메타 ===
+*.egg-info/
+.eggs/
+
+# === SecurityGuardrails 런타임 (감사로그·로컬 상태) ===
+.sg/
+
 # === OS / 에디터 ===
 .DS_Store
 Thumbs.db
