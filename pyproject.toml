@@ -24,6 +24,9 @@ sg = "sg.cli:main"
 [tool.setuptools.packages.find]
 include = ["sg*"]
 
+[tool.setuptools.package-data]
+sg = ["web/*.html"]
+
 [tool.ruff]
 line-length = 100
 target-version = "py310"

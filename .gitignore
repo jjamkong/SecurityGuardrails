@@ -25,6 +25,8 @@ reports/out/
 evidence/
 *.scan.json
 *.evidence.*
+demo-report.json
+report.json
 
 # === Node ===
 node_modules/

@@ -20,8 +20,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 pip install -e ".[dev]"                                   # 설치(개발 의존성 포함)
 ruff check . && mypy sg && pytest -q                      # 린트·타입·테스트 (CI와 동일)
 python -m sg scan https://app.internal --authorized-by 이름   # CLI 점검 (승인 필수)
-uvicorn sg.api:app --reload                               # API 서버 (POST /scans · GET /health)
 pip install -r requirements-docs.txt && mkdocs serve      # 문서 사이트 로컬 미리보기
+
+# 웹 UI (브라우저에서 도메인 입력 → 결과 표). 접근키 + 허용도메인 둘 다 필수(fail-closed):
+$env:SG_API_KEY="키"; $env:SG_AUTHORIZED_DOMAINS="next-securities.com"
+uvicorn sg.api:app --host 127.0.0.1 --port 8000           # http://127.0.0.1:8000
 ```
 
 > ⚠️ **승인된 자산만**: 스캔은 `--authorized-by` 필수 + 대상 호스트가 스코프(allowed_hosts) 안에 있어야 한다. 미승인/만료/범위밖이면 `AuthorizationError`로 차단(점검 0건).

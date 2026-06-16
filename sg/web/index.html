@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SecurityGuardrails — 웹 취약점 점검</title>
+  <style>
+    :root { --bg:#0f1115; --card:#1a1d24; --line:#2a2f3a; --fg:#e6e8ec; --muted:#9aa3b2; }
+    * { box-sizing: border-box; }
+    body { margin:0; background:var(--bg); color:var(--fg);
+           font-family: system-ui, "Segoe UI", "Malgun Gothic", sans-serif; }
+    .wrap { max-width: 880px; margin: 0 auto; padding: 24px 16px 64px; }
+    h1 { font-size: 20px; margin: 0 0 4px; }
+    .sub { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
+    .warn { background:#3a2a13; border:1px solid #6b4e1f; color:#f3d9a6;
+            padding:10px 12px; border-radius:8px; font-size:13px; margin-bottom:16px; }
+    .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; }
+    .row { display:flex; gap:10px; flex-wrap:wrap; }
+    label { display:block; font-size:12px; color:var(--muted); margin:8px 0 4px; }
+    input { width:100%; padding:9px 10px; border-radius:7px; border:1px solid var(--line);
+            background:#11141a; color:var(--fg); font-size:14px; }
+    .col { flex:1; min-width:200px; }
+    button { margin-top:14px; padding:10px 18px; border:0; border-radius:8px; cursor:pointer;
+             background:#3b5bdb; color:#fff; font-size:14px; font-weight:600; }
+    button:disabled { opacity:.6; cursor:default; }
+    .summary { display:flex; gap:8px; flex-wrap:wrap; margin:18px 0 10px; }
+    .chip { padding:6px 10px; border-radius:20px; font-size:13px; font-weight:600; }
+    table { width:100%; border-collapse:collapse; margin-top:8px; font-size:14px; }
+    th, td { text-align:left; padding:10px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
+    th { color:var(--muted); font-weight:600; font-size:12px; }
+    .sev { display:inline-flex; align-items:center; gap:6px; font-weight:600; white-space:nowrap; }
+    .dot { width:10px; height:10px; border-radius:50%; display:inline-block; }
+    .crit{color:#ff6b6b}.cdot-crit{background:#b00020}
+    .high{color:#ff8787}.cdot-high{background:#e53935}
+    .med{color:#ffb454}.cdot-medium{background:#fb8c00}
+    .low{color:#ffe066}.cdot-low{background:#fdd835}
+    .info{color:#aeb6c2}.cdot-info{background:#9e9e9e}
+    code { background:#11141a; padding:1px 5px; border-radius:4px; }
+    .fix { background:#11141a; border:1px solid var(--line); border-radius:8px; padding:10px 12px;
+           margin-top:6px; font-size:13px; color:var(--muted); }
+    .fix b { color:var(--fg); }
+    .err { color:#ff8787; margin-top:12px; font-size:14px; }
+    details summary { cursor:pointer; color:#7aa2ff; font-size:13px; }
+    .muted { color:var(--muted); font-size:12px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>📋 SecurityGuardrails — 웹 취약점 점검</h1>
+    <div class="sub">URL 입력 → Passive 점검 → 취약점 + 조치 가이드</div>
+    <div class="warn">⚠️ <b>승인된 자산만</b> 점검합니다. 서버에 등록된 허용 도메인(및 서브도메인)만
+      점검 가능하며, 그 외 도메인은 거부됩니다. 접근 키가 필요합니다.</div>
+
+    <div class="card">
+      <div class="row">
+        <div class="col" style="flex:2">
+          <label>점검 대상 URL/도메인</label>
+          <input id="target" placeholder="https://dev.mycompany.com" />
+        </div>
+        <div class="col">
+          <label>접근 키 (X-API-Key)</label>
+          <input id="apikey" type="password" placeholder="SG_API_KEY" />
+        </div>
+      </div>
+      <div class="row">
+        <div class="col">
+          <label>점검 담당자 (authorized-by)</label>
+          <input id="by" placeholder="you@org.com" />
+        </div>
+        <div class="col">
+          <label>승인 ID (scope-id)</label>
+          <input id="sid" placeholder="예: ticket-1234" />
+        </div>
+      </div>
+      <button id="run" onclick="runScan()">점검 실행</button>
+    </div>
+
+    <div id="out"></div>
+  </div>
+
+  <script>
+    const SEV = { critical:["crit","cdot-crit"], high:["high","cdot-high"],
+                  medium:["med","cdot-medium"], low:["low","cdot-low"], info:["info","cdot-info"] };
+    const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c =>
+      ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
+
+    async function runScan() {
+      const out = document.getElementById("out");
+      const btn = document.getElementById("run");
+      const target = document.getElementById("target").value.trim();
+      const apikey = document.getElementById("apikey").value;
+      const by = document.getElementById("by").value.trim() || "web-ui";
+      const sid = document.getElementById("sid").value.trim() || ("web-" + Date.now());
+      if (!target) { out.innerHTML = '<div class="err">대상 URL을 입력하세요.</div>'; return; }
+
+      btn.disabled = true; out.innerHTML = '<div class="muted">점검 중…</div>';
+      try {
+        const res = await fetch("/scans", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "X-API-Key": apikey },
+          body: JSON.stringify({ target, authorized_by: by, authorization_id: sid }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          out.innerHTML = '<div class="err">⛔ ' + esc(data.detail || res.statusText) + "</div>";
+          return;
+        }
+        render(data);
+      } catch (e) {
+        out.innerHTML = '<div class="err">요청 실패: ' + esc(e.message) + "</div>";
+      } finally { btn.disabled = false; }
+    }
+
+    function render(r) {
+      const s = r.summary || { total:0, by_severity:{} };
+      const chips = Object.entries(s.by_severity || {})
+        .filter(([, n]) => n > 0)
+        .map(([k, n]) => {
+          const [cls, dot] = SEV[k] || SEV.info;
+          return `<span class="chip ${cls}"><span class="dot ${dot}"></span> ${k} ${n}</span>`;
+        }).join("");
+
+      const rows = (r.findings || []).map((f, i) => {
+        const [cls, dot] = SEV[f.severity] || SEV.info;
+        const rem = f.remediation;
+        const fix = rem ? `
+          <div class="fix">
+            <b>조치:</b> ${esc(rem.summary)}<br>
+            <b>이유:</b> ${esc(rem.why)}<br>
+            <b>방법:</b><ul>${(rem.how || []).map(h => "<li>" + esc(h) + "</li>").join("")}</ul>
+            <b>검증:</b> ${esc(rem.verification)}
+          </div>` : "";
+        return `<tr>
+          <td><span class="sev ${cls}"><span class="dot ${dot}"></span>${esc(f.severity)}</span></td>
+          <td>${esc(f.title)}
+            <details><summary>조치 가이드</summary>${fix}</details>
+            <div class="muted">${esc(f.location)}</div></td>
+          <td><code>${esc(f.cwe || "-")}</code></td>
+        </tr>`;
+      }).join("");
+
+      document.getElementById("out").innerHTML = `
+        <div class="summary">${chips || '<span class="muted">발견 없음</span>'}</div>
+        <div class="card">
+          <div class="muted">대상: ${esc(r.target)} · 총 ${esc(s.total)}건 · ${esc(r.tool?.mode || "passive")}</div>
+          <table>
+            <thead><tr><th>심각도</th><th>항목</th><th>CWE</th></tr></thead>
+            <tbody>${rows || '<tr><td colspan="3" class="muted">발견된 취약점이 없습니다.</td></tr>'}</tbody>
+          </table>
+          ${(r.errors || []).length ? '<div class="err">오류: ' + esc(r.errors.join("; ")) + "</div>" : ""}
+        </div>`;
+    }
+  </script>
+</body>
+</html>
